@@ -28,7 +28,7 @@ On-chain flow:
    cd frontend
    cp .env.example .env
    ```
-   Set `VITE_FACTORY_ADDRESS` (and optional `VITE_CHAIN_ID`, default `80002`).
+   Set `VITE_FACTORY_ADDRESS` (and optional `VITE_CHAIN_ID`, default `80002`; supported values are `80002` for Polygon Amoy and `137` for Polygon PoS).
    Optionally set `VITE_DEFAULT_FREELANCER` to always prefill the freelancer field when you demo with the same second wallet.
    The app also **remembers** factory, escrow, amounts, and work reference in **browser localStorage** so fields stay filled between visits.
 3. Install and run the dev server:
