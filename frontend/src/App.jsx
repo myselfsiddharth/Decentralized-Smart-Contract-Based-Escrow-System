@@ -16,6 +16,7 @@ import {
 } from "./storage.js";
 import { formatContractError } from "./errors.js";
 import { finalizeGasOverrides } from "./gas.js";
+import { CHAIN_META, resolveConfiguredChainId } from "./chains.js";
 import {
   buildLoginMessage,
   clearAuthSession,
@@ -35,8 +36,11 @@ const STATUS_LABELS = [
 const defaultFreelancer =
   import.meta.env.VITE_DEFAULT_FREELANCER?.trim?.() || "";
 
-/** This UI only supports Polygon Amoy. */
-const CHAIN_ID = 80002;
+const CHAIN_ID = resolveConfiguredChainId(import.meta.env.VITE_CHAIN_ID);
+const CHAIN = CHAIN_META[CHAIN_ID];
+const CHAIN_NAME = CHAIN.chainName;
+const CHAIN_LABEL = `${CHAIN_NAME} (chain ${CHAIN_ID})`;
+const CHAIN_NATIVE_SYMBOL = CHAIN.nativeCurrency.symbol;
 
 /** Trim, strip wrapping quotes, add 0x if user pasted 40 hex chars only. */
 function normalizeHexAddress(s) {
@@ -450,7 +454,7 @@ export default function App() {
       if (Number(net.chainId) !== CHAIN_ID) {
         showFlash(
           "err",
-          `This app only runs on Polygon Amoy (chain ${CHAIN_ID}). Switch the active network in MetaMask to Polygon Amoy.`
+          `This app is configured for ${CHAIN_LABEL}. Switch the active network in MetaMask to ${CHAIN_NAME}.`
         );
         setBusy(false);
         return;
@@ -716,7 +720,7 @@ export default function App() {
     actionButtonExplanations.push("Connect your wallet first.");
   } else if (wrongChain) {
     actionButtonExplanations.push(
-      `Use Polygon Amoy (chain ${CHAIN_ID}) in MetaMask — switch the active network in your wallet.`
+      `Use ${CHAIN_LABEL} in MetaMask - switch the active network in your wallet.`
     );
   } else if (viewStatus == null) {
     actionButtonExplanations.push(
@@ -774,7 +778,7 @@ export default function App() {
   if (!account) createEscrowBlockers.push("Connect your wallet.");
   if (wrongChain)
     createEscrowBlockers.push(
-      `Switch MetaMask to Polygon Amoy (chain ${CHAIN_ID}).`
+      `Switch MetaMask to ${CHAIN_LABEL}.`
     );
   if (!factoryConfigured) {
     createEscrowBlockers.push(
@@ -792,7 +796,9 @@ export default function App() {
       <header className="app-header">
         <div className="app-header__top">
           <div className="app-logo" aria-hidden="true" />
-          <span className="app-pill">Polygon Amoy · testnet</span>
+          <span className="app-pill">
+            {CHAIN_NAME} - {CHAIN.networkType}
+          </span>
         </div>
         <h1>Escrow</h1>
         <p className="subtitle">
@@ -823,7 +829,7 @@ export default function App() {
               you control this address.
             </p>
             <p className="auth-network-note">
-              Network: <strong>Polygon Amoy</strong> (chain {CHAIN_ID})
+              Network: <strong>{CHAIN_NAME}</strong> (chain {CHAIN_ID})
             </p>
             <div className="auth-actions">
               <button
@@ -936,11 +942,10 @@ export default function App() {
                   ·{" "}
                   {wrongChain ? (
                     <span className="session-warn">
-                      wrong network ({chainId}) — switch to Polygon Amoy ({CHAIN_ID}) in
-                      MetaMask
+                      wrong network ({chainId}) - switch to {CHAIN_NAME} ({CHAIN_ID}) in MetaMask
                     </span>
                   ) : (
-                    <>Polygon Amoy ({chainId})</>
+                    <>{CHAIN_NAME} ({chainId})</>
                   )}
                 </>
               )}
@@ -1025,9 +1030,10 @@ export default function App() {
         </div>
         <p className="hint">
           This amount is what you will lock in the escrow when the client deposits
-          — it is not the network fee. Gas is separate; on Amoy the chain requires
-          about a 25 gwei priority fee minimum, so MetaMask may show a higher fee
-          than on mainnet Ethereum even for small escrows.
+          {" - "}
+          {CHAIN_ID === 80002
+            ? "it is not the network fee. Gas is separate; on Amoy the chain requires about a 25 gwei priority fee minimum, so MetaMask may show a higher fee than on mainnet Ethereum even for small escrows."
+            : `it is not the network fee. Gas is separate and paid in ${CHAIN_NATIVE_SYMBOL} on ${CHAIN_NAME}.`}
         </p>
         <button
           type="button"
